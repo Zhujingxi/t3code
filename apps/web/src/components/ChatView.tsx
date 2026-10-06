@@ -11182,6 +11182,7 @@ export default function ChatView(props: ChatViewProps) {
                         : undefined
                     }
                   >
+                    {threadStatusLine}
                     <ComposerSurface.Shell
                       contextStrip={showComposerContextStrip || showComposerModelStrip}
                     >
@@ -11286,7 +11287,6 @@ export default function ChatView(props: ChatViewProps) {
                                 ) : null
                               }
                               bannerItems={composerBannerItems}
-                              threadStatusLine={threadStatusLine}
                               resumeCompactionTokens={resumeCompactionTokens}
                               onSendWithFullHistory={sendWithFullHistory}
                               // With attachments or contexts aboard the pick just inserts the

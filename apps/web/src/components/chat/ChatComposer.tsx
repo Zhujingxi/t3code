@@ -1540,8 +1540,6 @@ export interface ChatComposerProps {
   sendDisabledReason: string | null;
   isPreparingWorktree: boolean;
   bannerItems: readonly ComposerBannerStackItem[];
-  /** Quiet thread state (settled, snoozed, woke) shown above the composer, outside the banner stack. */
-  threadStatusLine?: ReactNode;
   /** Tokens Enter compacts before sending; null when the next send keeps full history. */
   resumeCompactionTokens: number | null;
   /** Runs `send` as a one-off send that keeps full history instead of compacting first. */
@@ -6626,7 +6624,6 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
             restingControlsHost,
           )
         : null}
-      {props.threadStatusLine}
       <ComposerBanner.Dock>
         <ComposerBanner.Column>
           <ComposerBannerStack
