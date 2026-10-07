@@ -5,9 +5,56 @@ import {
   SshConnectionTarget,
 } from "@t3tools/client-runtime/connection";
 import { buildRemoteOpenUrl, EnvironmentId } from "@t3tools/contracts";
-import { describe, expect, it } from "vite-plus/test";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
-import { resolveRemoteOpenState } from "./remoteOpen";
+import { openRemoteEditorUrl, resolveRemoteOpenState } from "./remoteOpen";
+
+afterEach(() => vi.unstubAllGlobals());
+
+describe("openRemoteEditorUrl", () => {
+  const url = "vscode://vscode-remote/ssh-remote+server/work/project";
+
+  it("keeps an embedded workspace in place while launching the editor", async () => {
+    const assign = vi.fn();
+    const open = vi.fn().mockReturnValue(null);
+    vi.stubGlobal("window", { self: {}, top: {}, location: { assign }, open });
+
+    expect(await openRemoteEditorUrl(url)).toBe(true);
+    expect(open).toHaveBeenCalledExactlyOnceWith(url, "_blank", "noopener,noreferrer");
+    expect(assign).not.toHaveBeenCalled();
+  });
+
+  it("uses the current location in a standalone browser", async () => {
+    const context = {};
+    const assign = vi.fn();
+    const open = vi.fn();
+    vi.stubGlobal("window", { self: context, top: context, location: { assign }, open });
+
+    expect(await openRemoteEditorUrl(url)).toBe(true);
+    expect(assign).toHaveBeenCalledExactlyOnceWith(url);
+    expect(open).not.toHaveBeenCalled();
+  });
+
+  it("uses the desktop shell instead of browser navigation", async () => {
+    const openExternal = vi.fn().mockResolvedValue(true);
+    vi.stubGlobal("window", { desktopBridge: { openExternal } });
+
+    expect(await openRemoteEditorUrl(url)).toBe(true);
+    expect(openExternal).toHaveBeenCalledExactlyOnceWith(url);
+  });
+
+  it("preserves a desktop shell rejection", async () => {
+    vi.stubGlobal("window", { desktopBridge: { openExternal: vi.fn().mockResolvedValue(false) } });
+    expect(await openRemoteEditorUrl(url)).toBe(false);
+  });
+
+  it("reports a desktop shell failure", async () => {
+    vi.stubGlobal("window", {
+      desktopBridge: { openExternal: vi.fn().mockRejectedValue(new Error("Launch failed")) },
+    });
+    expect(await openRemoteEditorUrl(url)).toBe(false);
+  });
+});
 
 const environmentId = EnvironmentId.make("environment-1");
 
