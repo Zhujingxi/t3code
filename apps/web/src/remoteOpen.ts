@@ -168,8 +168,9 @@ export function useRemoteCapableEditors(): ReadonlyArray<EditorId> {
 /**
  * Fire a remote editor deep link. In desktop, route through the Electron
  * shell so the OS handler opens without navigating the renderer; in a
- * browser, assign the location — unlike window.open this does not leave a
- * blank tab behind.
+ * top-level browser, assign the location to avoid leaving a blank tab.
+ * Embedded clients open a separate browsing context so the host's frame-src
+ * policy cannot block the editor protocol or replace the workspace frame.
  *
  * Resolves false when the desktop shell refused the URL (e.g. an older
  * build whose protocol allowlist predates editor schemes) so callers do not
@@ -184,7 +185,11 @@ export async function openRemoteEditorUrl(url: string): Promise<boolean> {
       return false;
     }
   }
-  window.location.assign(url);
+  if (window.self !== window.top) {
+    window.open(url, "_blank", "noopener,noreferrer");
+  } else {
+    window.location.assign(url);
+  }
   return true;
 }
 
